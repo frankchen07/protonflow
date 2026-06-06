@@ -27,8 +27,17 @@ export function archiveAction(): boolean {
 
 export function deleteAction(): boolean {
   _log('Deleting...')
+  const wasOpen = isMessageOpen()
   const btn = findToolbarButton(['delete', 'trash'])
-  if (btn) { setTimeout(() => clickButton(btn), 50); return true }
+  if (btn) {
+    setTimeout(() => {
+      clickButton(btn)
+      if (wasOpen) {
+        setTimeout(() => navigateToFolder(['inbox']), 400)
+      }
+    }, 50)
+    return true
+  }
   _log('Delete button not found')
   return false
 }
@@ -95,16 +104,28 @@ export function starAction(): boolean {
 export function markUnreadAction(): boolean {
   _log('Marking as unread...')
   const btn = findToolbarButton(['unread'])
-  if (btn) { setTimeout(() => clickButton(btn), 50); return true }
-  _log('Mark unread button not found')
+  if (btn) {
+    const label = [btn.title, btn.getAttribute('aria-label') ?? '', btn.getAttribute('data-testid') ?? '']
+      .join(' ').toLowerCase()
+    if (!label.includes('unread')) return false  // already unread or wrong button, no-op
+    setTimeout(() => clickButton(btn), 50)
+    return true
+  }
+  _log('Mark unread button not found (already unread)')
   return false
 }
 
 export function markReadAction(): boolean {
   _log('Marking as read...')
   const btn = findToolbarButton(['read'])
-  if (btn) { setTimeout(() => clickButton(btn), 50); return true }
-  _log('Mark read button not found')
+  if (btn) {
+    const label = [btn.title, btn.getAttribute('aria-label') ?? '', btn.getAttribute('data-testid') ?? '']
+      .join(' ').toLowerCase()
+    if (label.includes('unread')) return false  // found "mark as unread" instead — already read, no-op
+    setTimeout(() => clickButton(btn), 50)
+    return true
+  }
+  _log('Mark read button not found (already read)')
   return false
 }
 
@@ -209,6 +230,12 @@ export function performAction(actionFn: () => void): void {
   const wasMessageOpen = isMessageOpen()
 
   _log(`performAction: selected=${selected.length}, hasCurrentMsg=${!!current}, msgOpen=${wasMessageOpen}`)
+
+  // Inside a message with no list selection: act directly via the message toolbar
+  if (wasMessageOpen && selected.length === 0) {
+    actionFn()
+    return
+  }
 
   if (selected.length > 1 && wasMessageOpen) {
     closeMessage()

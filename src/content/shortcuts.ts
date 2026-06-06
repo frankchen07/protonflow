@@ -32,12 +32,11 @@ export function updateShortcutSettings(newSettings: ProtonFlowSettings) {
 
 function handleKeyDown(e: KeyboardEvent): boolean | void {
   if (!settings.enabled) return
-  if (isInputFocused()) return
 
   const key = e.key.toLowerCase()
   const isShift = e.shiftKey
 
-  // g key: start sequence
+  // g+key navigation works even when focus is inside a message/content area
   if (key === 'g' && !e.ctrlKey && !e.metaKey && !e.altKey && !isShift) {
     if (!gKeyPressed) {
       e.preventDefault()
@@ -49,7 +48,6 @@ function handleKeyDown(e: KeyboardEvent): boolean | void {
     }
   }
 
-  // g+key navigation sequence
   if (gKeyPressed && !e.ctrlKey && !e.metaKey && !e.altKey) {
     e.preventDefault()
     e.stopPropagation()
@@ -58,6 +56,9 @@ function handleKeyDown(e: KeyboardEvent): boolean | void {
     handleGNavigation(key)
     return false
   }
+
+  // All other shortcuts require focus to be outside inputs/compose areas
+  if (isInputFocused()) return
 
   // Block non-specific modifier combos
   if (e.ctrlKey || e.metaKey || e.altKey) {

@@ -13,10 +13,16 @@ export interface FocusEngineOptions {
 export function createFocusEngine(opts: FocusEngineOptions) {
   const { getCursorIndex, setCursor, getRestoreDelay, log } = opts
 
-  // Maintain cursor highlight on a short interval in case Proton removes it
+  // Maintain cursor highlight — enforce that ONLY the cursor item has pf-cursor
   const highlightInterval = setInterval(() => {
     const items = getMessageItems()
     const idx = getCursorIndex()
+    // Remove stale highlights from any non-cursor items
+    document.querySelectorAll('.pf-cursor').forEach((el) => {
+      if (idx < 0 || !items[idx] || el !== items[idx]) {
+        el.classList.remove('pf-cursor')
+      }
+    })
     if (idx >= 0 && idx < items.length) {
       const item = items[idx] as HTMLElement
       if (item && !item.classList.contains('pf-cursor')) {
@@ -57,15 +63,31 @@ export function createFocusEngine(opts: FocusEngineOptions) {
 
   observer.observe(document.body, { childList: true, subtree: true })
 
-  // Route change detection (Proton uses pushState/hash navigation)
+  // Route change detection (Proton uses pushState/replaceState/popstate navigation)
   const originalPushState = history.pushState.bind(history)
   history.pushState = function (...args) {
     originalPushState(...args)
     setTimeout(() => {
       setCursor(-1)
-      log('Focus engine: route changed, cursor reset')
+      log('Focus engine: pushState, cursor reset')
     }, getRestoreDelay())
   }
+
+  const originalReplaceState = history.replaceState.bind(history)
+  history.replaceState = function (...args) {
+    originalReplaceState(...args)
+    setTimeout(() => {
+      setCursor(-1)
+      log('Focus engine: replaceState, cursor reset')
+    }, getRestoreDelay())
+  }
+
+  window.addEventListener('popstate', () => {
+    setTimeout(() => {
+      setCursor(-1)
+      log('Focus engine: popstate, cursor reset')
+    }, getRestoreDelay())
+  })
 
   // Visibility change: when user comes back to tab
   document.addEventListener('visibilitychange', () => {
@@ -88,6 +110,7 @@ export function createFocusEngine(opts: FocusEngineOptions) {
       clearInterval(highlightInterval)
       observer.disconnect()
       history.pushState = originalPushState
+      history.replaceState = originalReplaceState
     },
   }
 }
