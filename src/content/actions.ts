@@ -103,11 +103,8 @@ export function starAction(): boolean {
 
 export function markUnreadAction(): boolean {
   _log('Marking as unread...')
-  const btn = findToolbarButton(['unread'])
+  const btn = findToolbarButton(['toolbar:unread', 'mark as unread', 'mark unread'])
   if (btn) {
-    const label = [btn.title, btn.getAttribute('aria-label') ?? '', btn.getAttribute('data-testid') ?? '']
-      .join(' ').toLowerCase()
-    if (!label.includes('unread')) return false  // already unread or wrong button, no-op
     setTimeout(() => clickButton(btn), 50)
     return true
   }
@@ -117,11 +114,8 @@ export function markUnreadAction(): boolean {
 
 export function markReadAction(): boolean {
   _log('Marking as read...')
-  const btn = findToolbarButton(['read'])
+  const btn = findToolbarButton(['toolbar:read', 'mark as read', 'mark read'])
   if (btn) {
-    const label = [btn.title, btn.getAttribute('aria-label') ?? '', btn.getAttribute('data-testid') ?? '']
-      .join(' ').toLowerCase()
-    if (label.includes('unread')) return false  // found "mark as unread" instead — already read, no-op
     setTimeout(() => clickButton(btn), 50)
     return true
   }
