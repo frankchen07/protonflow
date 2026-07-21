@@ -36,7 +36,14 @@ function handleKeyDown(e: KeyboardEvent): boolean | void {
   const key = e.key.toLowerCase()
   const isShift = e.shiftKey
 
-  // g+key navigation works even when focus is inside a message/content area
+  // All shortcuts require focus to be outside inputs/compose areas
+  if (isInputFocused()) {
+    gKeyPressed = false
+    if (gKeyTimeout) { clearTimeout(gKeyTimeout); gKeyTimeout = null }
+    return
+  }
+
+  // g+key navigation
   if (key === 'g' && !e.ctrlKey && !e.metaKey && !e.altKey && !isShift) {
     if (!gKeyPressed) {
       e.preventDefault()
@@ -56,9 +63,6 @@ function handleKeyDown(e: KeyboardEvent): boolean | void {
     handleGNavigation(key)
     return false
   }
-
-  // All other shortcuts require focus to be outside inputs/compose areas
-  if (isInputFocused()) return
 
   // Block non-specific modifier combos
   if (e.ctrlKey || e.metaKey || e.altKey) {
