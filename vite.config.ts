@@ -9,6 +9,9 @@ export default defineConfig({
       manifest: 'manifest.json',
       watchFilePaths: ['manifest.json'],
       disableAutoLaunch: true,
+      // vite-plugin-web-extension's bundled manifest schema predates
+      // match_origin_as_fallback (a valid MV3 field); skip its stale validation.
+      skipManifestValidation: true,
     }),
   ],
   build: {

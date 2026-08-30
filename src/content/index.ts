@@ -13,6 +13,13 @@ function log(...args: unknown[]) {
 }
 
 async function init() {
+  console.log('[ProtonFlow] frame init:', location.href, 'isTop:', window === window.top)
+
+  if (window !== window.top && !window.location.hostname.includes('proton.me')) {
+    // Sandboxed child frame (e.g. the message-body iframe) injected via match_origin_as_fallback —
+    // diagnostic probe only for now, no shortcut logic runs here yet.
+    return
+  }
   if (!window.location.hostname.includes('proton.me')) return
 
   settings = await getSettings()

@@ -167,7 +167,10 @@ export function handleGNavigation(key: string): boolean {
   if (key === 'i') {
     if (isMessageOpen()) {
       closeMessage()
-      setTimeout(() => navigateToFolder(['inbox']), 100)
+      setTimeout(() => {
+        navigateToFolder(['inbox'])
+        setTimeout(() => refreshInbox(), 100)
+      }, 100)
       return true
     } else if (isInInbox()) {
       refreshInbox()

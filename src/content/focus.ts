@@ -29,7 +29,35 @@ export function createFocusEngine(opts: FocusEngineOptions) {
         item.classList.add('pf-cursor')
       }
     }
+
+    // Reclaim focus left behind on an editable element that's no longer visible
+    // (e.g. a label-picker's filter input after the dropdown closes) — this would
+    // otherwise permanently block shortcuts via isInputFocused() for no reason.
+    const active = document.activeElement as HTMLElement | null
+    if (active && active !== document.body) {
+      const tag = active.tagName.toLowerCase()
+      const isEditable = tag === 'input' || tag === 'textarea' || active.isContentEditable
+      if (isEditable && active.offsetParent === null) {
+        log('Focus engine: blurring stray hidden input', tag)
+        active.blur()
+      }
+    }
   }, 300)
+
+  // Blur any iframe that steals focus (ProtonMail renders the HTML message body
+  // in a sandboxed iframe; once it holds focus, keydown events fire inside that
+  // iframe's own document and never reach our document-level listener).
+  document.addEventListener(
+    'focusin',
+    (e) => {
+      const target = e.target as HTMLElement
+      if (target?.tagName === 'IFRAME') {
+        log('Focus engine: blurring iframe that stole focus')
+        target.blur()
+      }
+    },
+    true,
+  )
 
   // MutationObserver: detect message view close → restore focus
   let lastMessageOpenState = false

@@ -1,4 +1,4 @@
-import { isInputFocused, getSelectedMessages } from './dom'
+import { isInputFocused } from './dom'
 import { navigateCursor, toggleSelection, getCursorIndex } from './cursor'
 import {
   archiveAction,
@@ -32,12 +32,17 @@ export function updateShortcutSettings(newSettings: ProtonFlowSettings) {
 
 function handleKeyDown(e: KeyboardEvent): boolean | void {
   if (!settings.enabled) return
+  if (typeof e.key !== 'string') return
 
   const key = e.key.toLowerCase()
   const isShift = e.shiftKey
 
   // All shortcuts require focus to be outside inputs/compose areas
   if (isInputFocused()) {
+    if (settings.debug) {
+      const el = document.activeElement as HTMLElement | null
+      console.log('[ProtonFlow] blocked by isInputFocused:', el?.tagName, el?.className, 'inIframe:', el?.tagName === 'IFRAME')
+    }
     gKeyPressed = false
     if (gKeyTimeout) { clearTimeout(gKeyTimeout); gKeyTimeout = null }
     return
@@ -183,16 +188,12 @@ function handleKeyDown(e: KeyboardEvent): boolean | void {
       handled = true
       break
 
-    case 'l': {
-      const selected = getSelectedMessages()
-      if (selected.length > 0) {
-        e.preventDefault()
-        e.stopPropagation()
-        performAction(labelAction)
-        handled = true
-      }
+    case 'l':
+      e.preventDefault()
+      e.stopPropagation()
+      performAction(labelAction)
+      handled = true
       break
-    }
   }
 
   if (handled) return false
